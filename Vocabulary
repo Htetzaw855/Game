@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vocabulary Match Game</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --accent: #10b981;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --shadow: 0 8px 20px rgba(2, 6, 23, 0.06);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 20% 0%, #eef2ff 0%, #f8fafc 30%, #f8fafc 100%);
+      color: var(--text);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px 16px 8px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.3px;
+    }
+    .badge {
+      font-size: 12px;
+      background: linear-gradient(135deg, var(--primary), #6d28d9);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin: 10px 0 18px;
+    }
+    @media (min-width: 720px) {
+      .controls {
+        grid-template-columns: 1fr 1fr 1fr auto;
+        align-items: center;
+      }
+    }
+    .control-group {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    select, button {
+      border: 1px solid #e5e7eb;
+      background: white;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+    }
+    button.primary {
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.05s ease, filter 0.2s ease;
+    }
+    button.primary:active { transform: translateY(1px); }
+    button.secondary {
+      background: #f1f5f9;
+      cursor: pointer;
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+
+    .board {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 860px) {
+      .board {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .column {
+      background: var(--card);
+      padding: 14px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      min-height: 340px;
+    }
+    .column h2 {
+      font-size: 16px;
+      margin: 0 0 10px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #ffffff;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 12px 12px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+      cursor: pointer;
+      transition: transform 0.05s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      user-select: none;
+    }
+    .card:hover { box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08); }
+    .card.selected { border-color: var(--primary); background: #eef2ff; }
+    .card.correct { border-color: var(--accent); background: #ecfdf5; }
+    .card.wrong { border-color: var(--danger); background: #fef2f2; }
+
+    .pill {
+      font-size: 12px;
+      background: #f1f5f9;
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .statusbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      margin: 16px 0 8px;
+      align-items: center;
+    }
+    .progress-wrap {
+      background: #e5e7eb;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #22d3ee);
+      transition: width 0.3s ease;
+    }
+    .score { font-weight: 700; }
+    .timer { font-variant-numeric: tabular-nums; }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 16px;
+    }
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="badge">Elementary English</span>
+    <h1>Vocabulary Match Game</h1>
+  </header>
+
+  <div class="container">
+    <div class="controls">
+      <div class="control-group">
+        <label for="topic"><strong>Topic</strong></label>
+        <select id="topic" aria-label="Choose topic">
+          <option value="animals">Animals</option>
+          <option value="colors">Colors</option>
+          <option value="shapes">Shapes</option>
+          <option value="food">Food</option>
+          <option value="school">School</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="mode"><strong>Mode</strong></label>
+        <select id="mode" aria-label="Choose game mode">
+          <option value="words-defs" selected>Words → Meanings</option>
+          <option value="defs-words">Meanings → Words</option>
+          <option value="words-pics">Words → Pictures</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="pairs"><strong>Pairs</strong></label>
+        <select id="pairs" aria-label="Number of pairs">
+          <option>6</option>
+          <option selected>8</option>
+          <option>10</option>
+          <option>12</option>
+        </select>
+      </div>
+
+      <div class="control-group" style="justify-content: space-between;">
+        <button id="newGame" class="primary">New Game</button>
+        <button id="showHints" class="secondary">Hint</button>
+      </div>
+    </div>
+
+    <div class="statusbar">
+      <div><span class="muted">Progress:</span>
+        <span class="small"><span id="found">0</span>/<span id="total">0</span> pairs</span>
+      </div>
+      <div class="progress-wrap"><div id="progress" class="progress"></div></div>
+      <div class="small"><span class="muted">Time:</span> <span id="timer" class="timer">00:00</span> • <span class="score">Score: <span id="score">0</span></span></div>
+    </div>
+
+    <div class="board">
+      <section class="column">
+        <h2>Left</h2>
+        <div id="leftList" class="list" aria-label="Words list"></div>
+      </section>
+      <section class="column">
+        <h2>Right</h2>
+        <div id="rightList" class="list" aria-label="Matches list"></div>
+      </section>
+    </div>
+
+    <p class="footer">Click one on the left and one on the right to match. Make all pairs to win!</p>
+  </div>
+
+  <script>
+    // Data: topics with words, simple definitions, and emoji pics for kid-friendly visuals
+    const DATA = {
+      animals: [
+        { word: "cat", def: "a small pet that says 'meow'", pic: "🐱" },
+        { word: "dog", def: "a friendly pet that says 'woof'", pic: "🐶" },
+        { word: "bird", def: "an animal that can fly", pic: "🐦" },
+        { word: "fish", def: "an animal that swims in water", pic: "🐟" },
+        { word: "cow", def: "a farm animal that gives milk", pic: "🐄" },
+        { word: "horse", def: "a big animal that can run fast", pic: "🐴" },
+        { word: "duck", def: "a bird that swims and says 'quack'", pic: "🦆" },
+        { word: "lion", def: "a big cat, the king of the jungle", pic: "🦁" },
+        { word: "monkey", def: "an animal that climbs trees", pic: "🐒" },
+        { word: "rabbit", def: "a small animal with long ears", pic: "🐰" }
+      ],
+      colors: [
+        { word: "red", def: "the color of a ripe apple", pic: "🔴" },
+        { word: "blue", def: "the color of the sky", pic: "🔵" },
+        { word: "green", def: "the color of grass", pic: "🟢" },
+        { word: "yellow", def: "the color of the sun (drawing)", pic: "🟡" },
+        { word: "black", def: "the darkest color", pic: "⚫" },
+        { word: "white", def: "the color of snow", pic: "⚪" },
+        { word: "orange", def: "the color of the fruit orange", pic: "🟠" },
+        { word: "pink", def: "a light red color", pic: "🌸" },
+        { word: "purple", def: "a mix of red and blue", pic: "🟣" },
+        { word: "brown", def: "the color of tree bark", pic: "🟤" }
+      ],
+      shapes: [
+        { word: "circle", def: "a round shape with no corners", pic: "⚪" },
+        { word: "square", def: "a shape with 4 equal sides", pic: "🟦" },
+        { word: "triangle", def: "a shape with 3 sides", pic: "🔺" },
+        { word: "rectangle", def: "a shape with 4 sides, 2 long, 2 short", pic: "▭" },
+        { word: "star", def: "a pointy shape that shines in the night", pic: "⭐" },
+        { word: "heart", def: "a shape that means love", pic: "❤️" },
+        { word: "oval", def: "a stretched circle", pic: "🕳️" },
+        { word: "diamond", def: "a tilted square", pic: "🔷" }
+      ],
+      food: [
+        { word: "apple", def: "a red or green fruit", pic: "🍎" },
+        { word: "banana", def: "a long yellow fruit", pic: "🍌" },
+        { word: "bread", def: "a food you can toast", pic: "🍞" },
+        { word: "cheese", def: "a dairy food from milk", pic: "🧀" },
+        { word: "carrot", def: "an orange vegetable", pic: "🥕" },
+        { word: "egg", def: "a food with shell from a chicken", pic: "🥚" },
+        { word: "rice", def: "small white grains we eat", pic: "🍚" },
+        { word: "milk", def: "a white drink from cows", pic: "🥛" },
+        { word: "pizza", def: "flat bread with cheese and sauce", pic: "🍕" },
+        { word: "grapes", def: "small purple or green fruits", pic: "🍇" }
+      ],
+      school: [
+        { word: "book", def: "pages you read", pic: "📖" },
+        { word: "pencil", def: "you write with it", pic: "✏️" },
+        { word: "desk", def: "a table for students", pic: "🧑‍🎓🪑" },
+        { word: "teacher", def: "a person who helps you learn", pic: "👩‍🏫" },
+        { word: "eraser", def: "you use it to fix a mistake", pic: "🧽" },
+        { word: "board", def: "a big surface the teacher writes on", pic: "🧑‍🏫🖊️" },
+        { word: "bag", def: "you carry books in it", pic: "🎒" },
+        { word: "ruler", def: "a tool to measure lines", pic: "📏" }
+      ]
+    };
+
+    // Utilities
+    const $ = sel => document.querySelector(sel);
+    const shuffle = arr => {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+    const pad = n => String(n).padStart(2, "0");
+
+    // Game state
+    const state = {
+      leftSel: null,
+      rightSel: null,
+      pairs: [],
+      matched: new Set(),
+      score: 0,
+      total: 0,
+      found: 0,
+      startTime: null,
+      timerId: null,
+      mode: "words-defs",
+      topic: "animals"
+    };
+
+    function buildPairItems(topic, count, mode) {
+      const pool = shuffle(DATA[topic]).slice(0, count);
+      // Left always shows words (or meanings in reversed mode)
+      if (mode === "words-defs") {
+        return pool.map((item, idx) => ({
+          id: idx,
+          left: { key: item.word, label: item.word },
+          right: { key: item.word, label: item.def }
+        }));
+      } else if (mode === "defs-words") {
+        return pool.map((item, idx) => ({
+          id: idx,
+          left: { key: item.word, label: item.def },
+          right: { key: item.word, label: item.word }
+        }));
+      } else { // words-pics
+        return pool.map((item, idx) => ({
+          id: idx,
+          left: { key: item.word, label: item.word },
+          right: { key: item.word, label: item.pic }
+        }));
+      }
+    }
+
+    function renderLists() {
+      const leftList = $("#leftList");
+      const rightList = $("#rightList");
+      leftList.innerHTML = "";
+      rightList.innerHTML = "";
+
+      const leftItems = shuffle(state.pairs.map(p => ({ id: p.id, ...p.left })));
+      const rightItems = shuffle(state.pairs.map(p => ({ id: p.id, ...p.right })));
+
+      for (const item of leftItems) {
+        const node = document.createElement("div");
+        node.className = "card";
+        node.dataset.side = "left";
+        node.dataset.id = item.id;
+        node.innerHTML = `<span>${escapeHtml(item.label)}</span><span class="pill">#${item.id + 1}</span>`;
+        node.addEventListener("click", onSelect);
+        leftList.appendChild(node);
+      }
+      for (const item of rightItems) {
+        const node = document.createElement("div");
+        node.className = "card";
+        node.dataset.side = "right";
+        node.dataset.id = item.id;
+        // If the label contains emoji/symbols, keep it large
+        node.innerHTML = `<span style="font-size: 20px">${escapeHtml(item.label)}</span><span class="pill">#${item.id + 1}</span>`;
+        node.addEventListener("click", onSelect);
+        rightList.appendChild(node);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function onSelect(e) {
+      const card = e.currentTarget;
+      const id = Number(card.dataset.id);
+      const side = card.dataset.side;
+      if (state.matched.has(id)) return;
+
+      // Toggle selection
+      if (side === "left") {
+        if (state.leftSel === id) {
+          state.leftSel = null;
+          card.classList.remove("selected");
+          return;
+        }
+        // clear old left selection
+        document.querySelectorAll('.card.selected[data-side="left"]').forEach(n => n.classList.remove("selected"));
+        state.leftSel = id;
+        card.classList.add("selected");
+      } else {
+        if (state.rightSel === id) {
+          state.rightSel = null;
+          card.classList.remove("selected");
+          return;
+        }
+        document.querySelectorAll('.card.selected[data-side="right"]').forEach(n => n.classList.remove("selected"));
+        state.rightSel = id;
+        card.classList.add("selected");
+      }
+
+      // Check match when both selected
+      if (state.leftSel !== null && state.rightSel !== null) {
+        const isMatch = state.leftSel === state.rightSel;
+        const leftNode = document.querySelector(`.card.selected[data-side="left"]`);
+        const rightNode = document.querySelector(`.card.selected[data-side="right"]`);
+        if (isMatch) {
+          leftNode.classList.remove("selected"); rightNode.classList.remove("selected");
+          leftNode.classList.add("correct"); rightNode.classList.add("correct");
+          state.matched.add(state.leftSel);
+          state.found += 1;
+          state.score += 10;
+          updateStatus();
+          // Disable matched cards
+          setTimeout(() => {
+            leftNode.style.pointerEvents = "none";
+            rightNode.style.pointerEvents = "none";
+            wiggle(rightNode, "#10b981");
+          }, 100);
+          announce("Great! It's a match.");
+          if (state.found === state.total) {
+            setTimeout(win, 400);
+          }
+        } else {
+          leftNode.classList.add("wrong");
+          rightNode.classList.add("wrong");
+          state.score = Math.max(0, state.score - 2);
+          updateStatus();
+          announce("Try again!");
+          setTimeout(() => {
+            leftNode.classList.remove("wrong", "selected");
+            rightNode.classList.remove("wrong", "selected");
+          }, 400);
+        }
+        state.leftSel = null;
+        state.rightSel = null;
+      }
+    }
+
+    function wiggle(node, color) {
+      node.animate([
+        { transform: "translateX(0)" },
+        { transform: "translateX(-2px)" },
+        { transform: "translateX(2px)" },
+        { transform: "translateX(0)" }
+      ], { duration: 200, iterations: 1 });
+      node.style.borderColor = color;
+      setTimeout(() => node.style.borderColor = "transparent", 600);
+    }
+
+    function updateStatus() {
+      $("#found").textContent = state.found;
+      $("#total").textContent = state.total;
+      const pct = state.total ? (state.found / state.total) * 100 : 0;
+      $("#progress").style.width = pct + "%";
+      $("#score").textContent = state.score;
+    }
+
+    function win() {
+      stopTimer();
+      const time = $("#timer").textContent;
+      const msg = `You matched all pairs! Time: ${time} • Score: ${state.score}. Click New Game to play again.`;
+      alert(msg);
+    }
+
+    function startTimer() {
+      stopTimer();
+      state.startTime = Date.now();
+      state.timerId = setInterval(() => {
+        const sec = Math.floor((Date.now() - state.startTime) / 1000);
+        const mm = pad(Math.floor(sec / 60));
+        const ss = pad(sec % 60);
+        $("#timer").textContent = `${mm}:${ss}`;
+      }, 250);
+    }
+    function stopTimer() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+    }
+
+    function newGame() {
+      state.topic = $("#topic").value;
+      state.mode = $("#mode").value;
+      state.total = Number($("#pairs").value);
+      state.found = 0;
+      state.score = 0;
+      state.leftSel = null;
+      state.rightSel = null;
+      state.matched.clear();
+      state.pairs = buildPairItems(state.topic, state.total, state.mode);
+      updateStatus();
+      renderLists();
+      startTimer();
+    }
+
+    function showHint() {
+      // Reveal one correct pair that is not matched yet
+      const remaining = state.pairs
+        .map(p => p.id)
+        .filter(id => !state.matched.has(id));
+      if (!remaining.length) return;
+      const pick = remaining[Math.floor(Math.random() * remaining.length)];
+      const leftNode = document.querySelector(`.card[data-side="left"][data-id="${pick}"]`);
+      const rightNode = document.querySelector(`.card[data-side="right"][data-id="${pick}"]`);
+      if (leftNode && rightNode) {
+        wiggle(leftNode, "#22d3ee");
+        wiggle(rightNode, "#22d3ee");
+        state.score = Math.max(0, state.score - 1); // small penalty for hint
+        updateStatus();
+        announce("Here is a hint!");
+      }
+    }
+
+    function announce(text) {
+      // Lightweight screen-reader friendly announcement
+      let live = document.getElementById("aria-live");
+      if (!live) {
+        live = document.createElement("div");
+        live.id = "aria-live";
+        live.setAttribute("aria-live", "polite");
+        live.className = "sr-only";
+        live.style.position = "absolute";
+        live.style.left = "-9999px";
+        document.body.appendChild(live);
+      }
+      live.textContent = text;
+    }
+
+    // Event listeners
+    $("#newGame").addEventListener("click", newGame);
+    $("#showHints").addEventListener("click", showHint);
+    window.addEventListener("load", newGame);
+  </script>
+</body>
+</html>
